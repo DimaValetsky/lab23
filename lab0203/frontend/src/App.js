@@ -2,7 +2,10 @@ import React, { Component }from 'react';
 import axios from 'axios';
 import { Table, Button, Modal, ModalHeader, ModalBody, ModalFooter, Input, FormGroup, Label} from 'reactstrap';
 import './css/style.css';
-
+import Kek from "./components/Kek.js";
+import Control from "./components/Control";
+import Modalochka from "./components/Modalochka";
+// import {deleteTask} from "./components/Func.js";
 class App extends Component {
     state = {
         tasks: [],
@@ -52,7 +55,7 @@ class App extends Component {
                 tasks: response.data,
             })
         });
-        this._refreshTasks()
+        this.refreshTasks()
     };
     toggleNewTaskModal() {
         this.setState({
@@ -87,7 +90,7 @@ class App extends Component {
                 alert('You have to be logged in to do this!');
             }
         });
-        this._refreshTasks()
+        this.refreshTasks()
     }
     toggleFilterTasksModal() {
         this.setState({
@@ -125,7 +128,7 @@ class App extends Component {
         axios.put('http://localhost:8000/tasks/' + this.state.editTaskData.id + '/', fd,
             {headers: {'Authorization': 'Bearer ' + token}})
             .then((response) => {
-                this._refreshTasks();
+                this.refreshTasks();
                 this.setState({
                     editTaskData: {
                         id: '',
@@ -147,7 +150,7 @@ class App extends Component {
         axios.delete('http://localhost:8000/tasks/' + id + '/',
             {headers: {'Authorization': 'Bearer ' + token}})
             .then((response) => {
-                this._refreshTasks()
+                this.refreshTasks()
             })
             .catch(function (error) {
                 if (error.response.status === 401) {
@@ -197,7 +200,7 @@ class App extends Component {
                         });
                     localStorage.setItem('token', response.data.access);
                     localStorage.setItem('username', this.state.loggedInData.username);
-                    this._refreshTasks()
+                    this.refreshTasks()
                     })
                 .catch(function (error) {
             if (error.response.status === 401) {
@@ -208,7 +211,7 @@ class App extends Component {
     logout(){
         localStorage.setItem('token', '');
         localStorage.setItem('username', '');
-        this._refreshTasks()
+        this.refreshTasks()
     }
     toggleRegisterModal(){
         this.setState({
@@ -233,8 +236,9 @@ class App extends Component {
            alert('Passwords don\'t match.')
         }
     }
-    _refreshTasks(){
+    refreshTasks(){
         axios.get('http://localhost:8000/tasks/').then((response) => {
+            debugger
                 this.setState({
                     tasks: response.data,
                 })
@@ -256,32 +260,37 @@ class App extends Component {
                           <td>{task.file != null? <Button color="primary" size="sm" className="mr-2" >
                               {task.file == null? '' : task.file.replace(/^.*[\\\/]/, '')}</Button> : ''}
                           </td>
-                          <td>
-                              <Button color="info" size="sm" className="mr-2"
-                                      onClick={this.detailsTask.bind(this, task.id)}>
-                                  Details</Button>
-                              <Button color="success" size="sm" className="mr-2"
-                                      onClick={this.editTask.bind(this, task.id, task.name, task.status, task.file)}>
-                                  Edit</Button>
-                              <Button color="danger" size="sm"
-                                      onClick={this.deleteTask.bind(this, task.id)}>
-                                  Delete</Button>
-                          </td>
+                   <Control
+                   detailsTask = {this.detailsTask.bind(this, task.id)}
+                   editTask = {this.editTask.bind(this, task.id, task.name, task.status, task.file)}
+                   deleteTask = {this.deleteTask.bind(this, task.id)}
+                   />
+                          {/*<td>*/}
+                          {/*    <Button color="info" size="sm" className="mr-2"*/}
+                          {/*            onClick={this.detailsTask.bind(this, task.id)}>*/}
+                          {/*        Details</Button>*/}
+                          {/*    <Button color="success" size="sm" className="mr-2"*/}
+                          {/*            onClick={this.editTask.bind(this, task.id, task.name, task.status, task.file)}>*/}
+                          {/*        Edit</Button>*/}
+                          {/*    <Button color="danger" size="sm"*/}
+                          {/*            onClick={this.deleteTask.bind(this, task.id)}>*/}
+                          {/*        Delete</Button>*/}
+                          {/*</td>*/}
                     </tr>
            )
         });
         return (
             <div className="App_container">
                 <nav>
-                    <h4 className="logo">Hello, &nbsp;
-                        {this.isAuthorized() ? localStorage.getItem('username') + '!' : 'guest!' }
-                    </h4>
+                    <Kek name={this.isAuthorized}
+                         refreshTasks = {this.refreshTasks.bind(this)}
+                    toggleNewTaskModal = {this.toggleNewTaskModal.bind(this)}
+                    toggleFilterTasksModal = {this.toggleFilterTasksModal.bind(this)}
+                    toggleRegisterModal = {this.toggleRegisterModal.bind(this)}/>
                     <ul className="nav-menu">
-                        <li><Button color="info" size="lg" className="mr-2 mt-md-2"
-                                    onClick={this._refreshTasks.bind(this)}>Task List</Button></li>
+
                         <li>
-                            <Button color="info" size="lg" className="mr-2 mt-md-2"
-                                    onClick={this.toggleNewTaskModal.bind(this)}>Add Task</Button>
+
                             <Modal isOpen={this.state.newTaskModal} toggle={this.toggleNewTaskModal.bind(this)}>
                                 <ModalHeader toggle={this.toggleNewTaskModal.bind(this)}>Add a new task</ModalHeader>
                                 <ModalBody>
@@ -324,8 +333,7 @@ class App extends Component {
                                 </ModalFooter>
                             </Modal>
                         </li>
-                        <li><Button color="info" size="lg" className="mr-2 mt-md-2"
-                                    onClick={this.toggleFilterTasksModal.bind(this)}>Filter</Button></li>
+
                             <Modal isOpen={this.state.filterTasksModal} toggle={this.toggleFilterTasksModal.bind(this)}>
                                 <ModalHeader toggle={this.toggleFilterTasksModal.bind(this)}>Filter tasks</ModalHeader>
                                 <ModalBody>
@@ -347,8 +355,8 @@ class App extends Component {
                                             onClick={this.toggleFilterTasksModal.bind(this)}>Cancel</Button>
                                 </ModalFooter>
                             </Modal>
-                        <li><Button color="info" size="lg" className="mr-2 mt-md-2"
-                                    onClick={this.toggleRegisterModal.bind(this)}>Register</Button></li>
+                        {/*<li><Button color="info" size="lg" className="mr-2 mt-md-2"*/}
+                        {/*            onClick={this.toggleRegisterModal.bind(this)}>Register</Button></li>*/}
                             <Modal isOpen={this.state.registerModal} toggle={this.toggleRegisterModal.bind(this)}>
                                 <ModalHeader toggle={this.toggleRegisterModal.bind(this)}>Register</ModalHeader>
                                 <ModalBody>
@@ -441,40 +449,46 @@ class App extends Component {
                             </Modal>
                     </ul>
                 </nav>
-                <Modal isOpen={this.state.detailsTaskModal} toggle={this.toggleDetailsTaskModal.bind(this)}>
-                    <ModalHeader toggle={this.toggleDetailsTaskModal.bind(this)}>Task details</ModalHeader>
-                    <ModalBody>
-                        <FormGroup>
-                            <Label for="task_id">Task ID:</Label>
-                            <Input type="text" readOnly={true} id="task_id"
-                                   placeholder={this.state.detailsTaskData.id}/>
-                        </FormGroup>
-                        <FormGroup>
-                            <Label for="task_name">Task Name:</Label>
-                            <Input type="text" readOnly={true} id="task_name"
-                                   placeholder={this.state.detailsTaskData.name}/>
-                        </FormGroup>
-                        <FormGroup>
-                            <Label for="task_status">Task Status:</Label>
-                            <Input type="text" readOnly={true} id="task_status"
-                                   placeholder={this.state.detailsTaskData.status}/>
-                        </FormGroup>
-                        <FormGroup>
-                            <Label for="task_date">Task Date:</Label>
-                            <Input type="text" readOnly={true} id="task_date"
-                                   placeholder={new Date(this.state.detailsTaskData.date).toLocaleString()}/>
-                        </FormGroup>
-                        <FormGroup>
-                            <Label for="task_file">Task File:</Label>
-                            <Input type="text" readOnly={true} id="task_file"
-                                   placeholder={this.state.detailsTaskData.file}/>
-                        </FormGroup>
-                    </ModalBody>
-                    <ModalFooter>
-                        <Button color="primary"
-                                onClick={this.toggleDetailsTaskModal.bind(this)}>Ok</Button>
-                    </ModalFooter>
-                </Modal>
+                {/*<Modal isOpen={this.state.detailsTaskModal} toggle={this.toggleDetailsTaskModal.bind(this)}>*/}
+                    <Modalochka
+                        detailsTaskModal = {this.state.detailsTaskModal}
+                    toggleDetailsTaskModal = {this.toggleDetailsTaskModal.bind(this)}
+                    detailsTaskData = {this.state.detailsTaskData}
+
+                    />
+                    {/*<ModalHeader toggle={this.toggleDetailsTaskModal.bind(this)}>Task details</ModalHeader>*/}
+                    {/*<ModalBody>*/}
+                    {/*    <FormGroup>*/}
+                    {/*        <Label for="task_id">Task ID:</Label>*/}
+                    {/*        <Input type="text" readOnly={true} id="task_id"*/}
+                    {/*               placeholder={this.state.detailsTaskData.id}/>*/}
+                    {/*    </FormGroup>*/}
+                    {/*    <FormGroup>*/}
+                    {/*        <Label for="task_name">Task Name:</Label>*/}
+                    {/*        <Input type="text" readOnly={true} id="task_name"*/}
+                    {/*               placeholder={this.state.detailsTaskData.name}/>*/}
+                    {/*    </FormGroup>*/}
+                    {/*    <FormGroup>*/}
+                    {/*        <Label for="task_status">Task Status:</Label>*/}
+                    {/*        <Input type="text" readOnly={true} id="task_status"*/}
+                    {/*               placeholder={this.state.detailsTaskData.status}/>*/}
+                    {/*    </FormGroup>*/}
+                    {/*    <FormGroup>*/}
+                    {/*        <Label for="task_date">Task Date:</Label>*/}
+                    {/*        <Input type="text" readOnly={true} id="task_date"*/}
+                    {/*               placeholder={new Date(this.state.detailsTaskData.date).toLocaleString()}/>*/}
+                    {/*    </FormGroup>*/}
+                    {/*    <FormGroup>*/}
+                    {/*        <Label for="task_file">Task File:</Label>*/}
+                    {/*        <Input type="text" readOnly={true} id="task_file"*/}
+                    {/*               placeholder={this.state.detailsTaskData.file}/>*/}
+                    {/*    </FormGroup>*/}
+                    {/*</ModalBody>*/}
+                    {/*<ModalFooter>*/}
+                    {/*    <Button color="primary"*/}
+                    {/*            onClick={this.toggleDetailsTaskModal.bind(this)}>Ok</Button>*/}
+                    {/*</ModalFooter>*/}
+                {/*</Modal>*/}
                 <Modal isOpen={this.state.editTaskModal} toggle={this.toggleEditTaskModal.bind(this)}>
                     <ModalHeader toggle={this.toggleEditTaskModal.bind(this)}>Edit task</ModalHeader>
                     <ModalBody>
